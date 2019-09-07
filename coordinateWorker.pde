@@ -1,6 +1,8 @@
+import java.util.Map;
+
 class coordinate {
-  float x;
-  float y;
+  public float x;
+  public float y;
   
   public coordinate(float x, float y) {
     this.x = x; 
@@ -12,8 +14,9 @@ class coordinateWorker extends coordinate {
   protected float spaceWidth; 
   protected float spaceHeight;
   protected float changeAmount;
-  protected Direction horizontalD;
-  protected Direction verticalD;
+  protected Direction currentD = Direction.NONE;
+  protected Direction[] listD = { Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT };
+  protected HashMap<Direction, Direction> oppositeD;
   
   public coordinateWorker(float x, float y, float spaceWidth, float spaceHeight) {
     super(x, y);
@@ -21,50 +24,70 @@ class coordinateWorker extends coordinate {
     this.spaceWidth = spaceWidth;
     this.spaceHeight = spaceHeight;
     
-    // setup initial directions
-    if (x < floor(spaceWidth / 2)) {
-      horizontalD = Direction.LEFT; 
-    } else {
-      horizontalD = Direction.RIGHT;
-    }
+    // setup opposite hash
+    oppositeD = new HashMap<Direction, Direction>();
+    oppositeD.put(Direction.UP, Direction.DOWN);
+    oppositeD.put(Direction.DOWN, Direction.UP);
+    oppositeD.put(Direction.LEFT, Direction.RIGHT);
+    oppositeD.put(Direction.RIGHT, Direction.LEFT);
+    oppositeD.put(Direction.NONE, Direction.NONE);
     
-    if (y < floor(spaceHeight / 2)) {
-      verticalD = Direction.DOWN; 
-    } else {
-      verticalD = Direction.UP;
-    }
+    // setup initial directions
+    changeDirection();
     
     // set initial change anount
-    changeAmount = 5;
+    changeAmount = 1;
   }
   
-  protected void updateDirection() {
-    // horizontal
-    if (x <= 0) { horizontalD = Direction.RIGHT; }
-    if (x >= spaceWidth) { horizontalD = Direction.LEFT; }
-    // vertical
-    if (y <= 0) { verticalD = Direction.DOWN; }
-    if (y >= spaceHeight) { verticalD = Direction.UP; }
+  protected Direction randomDirection() {
+    return listD[int(random(listD.length))];
   }
   
-  protected void updateHorizontalLocation() {
-    if (horizontalD == Direction.RIGHT) { x = x + changeAmount; }
-    else { x = x - changeAmount; }
-  }
-  
-  protected void updateVerticalLocation() {
-    if (verticalD == Direction.UP) { y = y - changeAmount; }
-    else { y = y + changeAmount; }
+  protected void changeDirection() {
+    Direction newD = randomDirection();
+    while (newD == oppositeD.get(currentD) || newD == currentD) {
+      newD = randomDirection();
+    }
+    currentD = newD;
   }
   
   public void updateLocation() {
-    updateHorizontalLocation();
-    updateVerticalLocation();
-    updateDirection();
+    float currentX = x;
+    float currentY = y;
+    
+    switch(currentD) {
+      case UP:
+        if (y > 0)
+          y -= changeAmount;
+        break;
+      case DOWN:
+        if (y < spaceHeight)
+          y += changeAmount;
+        break;
+      case LEFT:
+        if (x > 0)
+          x -= changeAmount;
+        break;
+      case RIGHT:
+        if (x < spaceWidth)
+          x += changeAmount;
+        break;
+      default:
+        break;
+    }
+    
+    if (x == currentX && y == currentY) {
+      changeDirection();
+      updateLocation();
+    }
   }
   
   public void setChangeAmount(float newCA) {
     changeAmount = newCA;
+  }
+  
+  public void setDirection(Direction newD) {
+    currentD = newD;
   }
   
   public float getChangeAmount() {
